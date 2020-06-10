@@ -1,0 +1,35 @@
+Private Sub UserForm_Initialize()
+
+reqDateInput.Value = Format$(Date, "yyyy-mm-dd")
+
+End Sub
+Private Sub OKButton_Click()
+
+    reqDate = reqDateInput.Value
+
+    If Not IsDate(reqDate) Then
+        MsgBox "Not a date"
+        Exit Sub
+    Else
+        reqDateString = "*" & Format$(reqDate, "yyyy-mm-dd") & "*"
+    End If
+    
+    If reqPurp1.Value = True Then
+        reqPurp = "CSL"
+    ElseIf reqPurp2.Value = True Then
+        reqPurp = "OB"
+    Else
+        MsgBox "Complete all fields"
+        Exit Sub
+    End If
+    
+    Unload UserFormPurpose
+    
+End Sub
+Private Sub CancelButton_Click()
+
+Unload Me
+
+End
+
+End Sub
