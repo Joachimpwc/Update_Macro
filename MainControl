@@ -1,0 +1,207 @@
+Public reqDate As Date
+Public reqDateString As String
+Public reqPurp As String
+Public slaveFound As String
+Public masterFound As String
+Public lastrowSlave As String
+Public lastrowMaster As String
+Sub MainUpdate()
+    
+    Dim holidays As Variant
+    Dim slaveDir As String
+    Dim masterDir As String
+    
+    holidays = FindHolidays
+    slaveDir = FindSlaveDir
+    masterDir = FindMasterDir
+    
+    OpenWorkDir slaveDir, masterDir
+    
+    Select Case reqPurp
+        Case Is = "CSL"
+            PrepareSlaveCSL slaveDir, holidays
+            CopySlaveMasterCSL slaveDir, masterDir
+        Case Is = "OB"
+            PrepareSlaveOB slaveDir, holidays
+            CopySlaveMasterOB slaveDir, masterDir
+    End Select
+    
+End Sub
+Function FindHolidays() As Variant
+    
+    Dim dirHoli As String
+    Dim lastrowHoli As Integer
+    Dim arrayHoli As Variant
+    Dim wbHoli As String
+        
+    dirHoli = "\\dklesv701.nilemah.com\common\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\Helligdage.xlsx"
+    wbHoli = "Helligdage.xlsx"
+    
+    Workbooks.Open Filename:=dirHoli, UpdateLinks:=False
+        Workbooks(wbHoli).Activate
+        
+    lastrowHoli = Workbooks(wbHoli).Sheets("Ark1").Range("A1").CurrentRegion.Rows.Count
+    
+    Workbooks(wbHoli).Sheets("Ark1").Range("B1").Formula = "=Year(Today())"
+    
+    ReDim arrayHoli(1 To lastrowHoli) As Variant
+        For i = 1 To lastrowHoli
+            If IsDate(Workbooks(wbHoli).Sheets("Ark1").Cells(i, 2)) Then
+                arrayHoli(i) = Workbooks(wbHoli).Sheets("Ark1").Cells(i, 2).Value
+            End If
+        Next i
+    
+    FindHolidays = arrayHoli
+    
+    Workbooks(wbHoli).Close SaveChanges:=True
+
+End Function
+Function FindSlaveDir() As String
+
+    UserFormPurpose.Show
+
+    Dim slavePath As String
+    
+    Select Case reqPurp
+        Case Is = "CSL"
+            slavePath = "W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\CSL2 SD006e rapporter\"
+        Case Is = "OB"
+            slavePath = "W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\8. Backorders analyse\SD016\"
+    End Select
+
+    slaveFound = Dir(slavePath & reqDateString)
+
+    If slaveFound <> "" Then
+        FindSlaveDir = slavePath & slaveFound
+    End If
+    
+End Function
+Function FindMasterDir() As String
+
+    Dim masterPath As String
+    Select Case reqPurp
+        Case Is = "CSL"
+            masterPath = "W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\"
+        Case Is = "OB"
+            masterPath = "W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\8. Backorders analyse\"
+    End Select
+    
+    masterFound = Dir(masterPath & "*master*")
+    
+    If masterFound <> "" Then
+        FindMasterDir = masterPath & masterFound
+    End If
+    
+End Function
+Sub OpenWorkDir(slaveDir As String, masterDir As String)
+
+    Workbooks.Open Filename:=slaveDir, UpdateLinks:=False
+        Workbooks(slaveFound).Activate
+        Application.Calculation = xlManual
+    Workbooks.Open Filename:=masterDir, UpdateLinks:=False
+        Workbooks(masterFound).Activate
+        Application.Calculation = xlManual
+
+End Sub
+Sub PrepareSlaveCSL(slaveDir As String, holidays As Variant)
+
+    Dim MB5B As String
+    Dim MB5Bdate As String
+    
+    MB5Bdate = Format$(WorksheetFunction.WorkDay(reqDate, -3), "yyyy-mm-dd")
+
+    MsgBox MB5Bdate
+    MsgBox MB5B
+    
+    MB5B = Dir("W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\MB5B rapporter\" & MB5Bdate & "*.xlsx")
+    
+    MsgBox MB5B
+    
+    lastrowSlave = Workbooks(slaveFound).Sheets("List").Cells.Find("*", searchorder:=xlByRows, searchdirection:=xlPrevious).Row
+
+    Workbooks(slaveFound).Sheets("List").Range("AR3") = "MB5B"
+    Workbooks(slaveFound).Sheets("List").Range("AS3") = "Comment"
+    Workbooks(slaveFound).Sheets("List").Range("AT3") = "ABC"
+    Workbooks(slaveFound).Sheets("List").Range("AU3") = "Brand"
+    Workbooks(slaveFound).Sheets("List").Range("AV3") = "Indkøber"
+    Workbooks(slaveFound).Sheets("List").Range("AW3") = "Produkt Kategori"
+       
+    Workbooks(slaveFound).Sheets("List").Range("AR4").Formula = "=VLOOKUP(VALUE(O4),'W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\MB5B rapporter\[" & MB5B & "]" & MB5Bdate & " MB5B'!$B:$H,7,FALSE)"
+    Workbooks(slaveFound).Sheets("List").Range("AT4").Formula = "=IFERROR(INDEX('W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\[ABC klassificering Q4 2019.xlsx]Report 1'!$H:$H,MATCH(VALUE(O4),'W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\[ABC klassificering Q4 2019.xlsx]Report 1'!$C:$C,0)),""OBS"")"
+    Workbooks(slaveFound).Sheets("List").Range("AU4").Formula = "=IFERROR(INDEX('W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\[ABC klassificering Q4 2019.xlsx]Report 1'!$E:$E,MATCH(VALUE(O4),'W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\[ABC klassificering Q4 2019.xlsx]Report 1'!$C:$C,0)),""OBS"")"
+    Workbooks(slaveFound).Sheets("List").Range("AV4").Formula = "=IFERROR(INDEX('W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\[ABC klassificering Q4 2019.xlsx]Report 1'!$S:$S,MATCH(VALUE(O4),'W:\Diverse\CustomerSatisfactionTeam\JUMP_R2P\8. Repporting\6. CSL2\[ABC klassificering Q4 2019.xlsx]Report 1'!$C:$C,0)),""OBS"")"
+    Workbooks(slaveFound).Sheets("List").Range("AW4").Formula = "=IFERROR(INDEX('W:\Diverse\0_SAP\Rapporter\[Material_Master_Data.xlsx]Report 1'!$Z:$Z,MATCH(O4,'W:\Diverse\0_SAP\Rapporter\[Material_Master_Data.xlsx]Report 1'!$A:$A,0)),""OBS"")"
+    
+    Workbooks(slaveFound).Sheets("List").Activate
+    Workbooks(slaveFound).Sheets("List").Range("AR4:AW4").Select
+        Selection.AutoFill Destination:=Range("AR4:AW" & lastrowSlave), Type:=xlFillDefault
+    
+    Calculate
+        
+End Sub
+Sub CopySlaveMasterCSL(slaveDir As String, masterDir As String)
+
+    lastrowMaster = Workbooks(masterFound).Sheets("CSL lines accumulated").Cells.Find("*", searchorder:=xlByRows, searchdirection:=xlPrevious).Row
+    
+    Workbooks(slaveFound).Sheets("List").Activate
+    Workbooks(slaveFound).Sheets("List").Range("A4:AX" & lastrowSlave).Copy
+
+    Workbooks(masterFound).Sheets("CSL lines accumulated").Activate
+    Workbooks(masterFound).Sheets("CSL lines accumulated").Range("A" & lastrowMaster + 1).Select
+        With Application.Selection
+            .PasteSpecial XlPasteType.xlPasteAllUsingSourceTheme
+            .PasteSpecial XlPasteType.xlPasteValues
+        End With
+    Application.CutCopyMode = False
+    Workbooks(slaveFound).Application.Calculation = xlAutomatic
+    Workbooks(slaveFound).Close SaveChanges:=True
+    
+    Workbooks(masterFound).Save
+    
+End Sub
+Sub PrepareSlaveOB(slaveDir As String, holidays As Variant)
+
+    lastrowSlave = Workbooks(slaveFound).Sheets("Order Book").Cells.Find("*", searchorder:=xlByRows, searchdirection:=xlPrevious).Row
+
+    Workbooks(slaveFound).Sheets("Order Book").Range("V2") = "Day"
+    Workbooks(slaveFound).Sheets("Order Book").Range("W2") = "Month"
+    Workbooks(slaveFound).Sheets("Order Book").Range("X2") = "Year"
+    Workbooks(slaveFound).Sheets("Order Book").Range("Y2") = "Brand"
+    Workbooks(slaveFound).Sheets("Order Book").Range("Z2") = "Brand DK"
+    Workbooks(slaveFound).Sheets("Order Book").Range("AA2") = "Material Name"
+    
+    Workbooks(slaveFound).Sheets("Order Book").Range("V3").Formula = "=Day(Datevalue(U3))"
+    Workbooks(slaveFound).Sheets("Order Book").Range("W3").Formula = "=Month(Datevalue(U3))"
+    Workbooks(slaveFound).Sheets("Order Book").Range("X3").Formula = "=Year(Datevalue(U3))"
+    Workbooks(slaveFound).Sheets("Order Book").Range("Y3").Formula = "=INDEX('W:\Diverse\0_SAP\Rapporter\[Material_Master_Data.xlsx]Report 1'!$T:$T,MATCH(H3,'W:\Diverse\0_SAP\Rapporter\[Material_Master_Data.xlsx]Report 1'!$A:$A,0))"
+    Workbooks(slaveFound).Sheets("Order Book").Range("Z3").Formula = "=IFERROR(IF(OR(Y3=""Bantex"",Y3=""UNILUX"",Y3=""LINEX"",Y3=""Oxford"",Y3=""ELBA"",Y3=""Securit"",Y3=""Floortex"",Y3=""Pierre by ELBA"",Y3=""ELBA"",Y3=""Carlton"",Y3=""Pelikan""),Y3,""Private Label""),""Mangler i material master"")"
+    Workbooks(slaveFound).Sheets("Order Book").Range("AA3").Formula = "=H3&"" - ""&I3"
+    
+    Workbooks(slaveFound).Sheets("Order Book").Activate
+    Workbooks(slaveFound).Sheets("Order Book").Range("V3:AA3").Select
+        Selection.AutoFill Destination:=Range("V3:AA" & lastrowSlave), Type:=xlFillDefault
+        
+    Calculate
+
+End Sub
+Sub CopySlaveMasterOB(slaveDir As String, masterDir As String)
+
+    lastrowMaster = Workbooks(masterFound).Sheets("Order Book").Cells.Find("*", searchorder:=xlByRows, searchdirection:=xlPrevious).Row
+    
+    Workbooks(slaveFound).Sheets("Order Book").Activate
+    Workbooks(slaveFound).Sheets("Order Book").Range("B3:AA" & lastrowSlave).Copy
+
+    Workbooks(masterFound).Sheets("Order Book").Activate
+    Workbooks(masterFound).Sheets("Order Book").Range("A" & lastrowMaster + 1).Select
+        With Application.Selection
+            .PasteSpecial XlPasteType.xlPasteAllUsingSourceTheme
+            .PasteSpecial XlPasteType.xlPasteValues
+        End With
+    Application.CutCopyMode = False
+    Workbooks(slaveFound).Application.Calculation = xlAutomatic
+    Workbooks(slaveFound).Close SaveChanges:=True
+    
+    Workbooks(masterFound).RefreshAll
+    Workbooks(masterFound).Save
+
+End Sub
